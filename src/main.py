@@ -35,7 +35,16 @@ for page in document:
 base64_image = encode_image(PIC_PATH)
 
 prompt = f"""
-    given the image attached i want to fill the following fields {fields_to_fill}. Fill all the field that you can
+    Dada la imagen adjunta, quiero que rellenes los siguientes campos {fields_to_fill}.
+
+    Formato: el resultado tiene que ser un JSON como en el ejemplo con los campos rellenados, nada más. No me des nada más que no sea el JSON con los campos rellenados.
+
+
+    Ejemplo:
+    {{ 
+        "nombre": ""
+    }}
+
 """
 
 chat_completion = client.chat.completions.create(
