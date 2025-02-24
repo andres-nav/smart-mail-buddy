@@ -1,4 +1,4 @@
-VENV_PATH = venv
+VENV_PATH = ./venv
 
 .PHONY: all
 all: run
