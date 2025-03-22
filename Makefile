@@ -14,6 +14,7 @@ run:
 
 # Create a virtual environment and install dependencies
 .PHONY: install
+	
 install:
 	@echo "Installing dependencies..."
 	@if [ ! -d $(VENV_PATH) ]; then \

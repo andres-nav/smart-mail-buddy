@@ -1,14 +1,14 @@
 import os
-from io import BytesIO
-import base64
 
-from dotenv import load_dotenv
-from PIL import Image
+import re
 
 import pymupdf
+from dotenv import load_dotenv
 from groq import Groq
 
-from ocr_tools import AWSRekognitionOCR, EasyOCR, TessseractOCR
+import json
+
+from ocr_tools import AWSRekognitionOCR
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 FORM_PATH = os.path.join(DIR, "../docs/alta_autonomos.pdf")
@@ -22,17 +22,15 @@ client = Groq(api_key=api_key)
 document = pymupdf.open(FORM_PATH)
 
 fields_to_fill = []
+seen_fields = set()  # Track unique field names
 
 for page in document:
     for field in page.widgets():
-        if field.field_type == pymupdf.PDF_WIDGET_TYPE_TEXT:
-            fields_to_fill.append(field.field_name)
-
-# tesseractOCR = TesseractOCR()
-# extracted_text = tesseractOCR.process_image(PIC_PATH)
-
-# easyOCR = EasyOCR()
-# extracted_text = easyOCR.process_image(PIC_PATH)
+        if field.field_type == pymupdf.PDF_WIDGET_TYPE_TEXT:  # type: ignore
+            field_name = field.field_name
+            if field_name not in seen_fields:
+                seen_fields.add(field_name)
+                fields_to_fill.append(field_name)
 
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -82,7 +80,55 @@ chat_completion = client.chat.completions.create(
     stream=False,
 )
 
-print(chat_completion.choices[0].message.content)
+raw_response = chat_completion.choices[0].message.content
 
+if not raw_response:
+    raise Exception("Empty response from LLM")
 
-# document.save(os.path.join(DIR, "output.pdf"))
+# Clean the response to extract valid JSON
+cleaned_response_match = re.search(r"(\{.*\})", raw_response, re.DOTALL)
+if cleaned_response_match:
+    cleaned_response = cleaned_response_match.group(1).strip()
+else:
+    raise ValueError("Could not extract JSON from the response")
+
+# Additional cleaning steps
+cleaned_response = (
+    cleaned_response.replace("“", '"')  # Replace smart quotes
+    .replace("”", '"')
+    .replace("'", '"')  # Replace single quotes with double quotes
+    .replace("\\", "")  # Remove potential escape characters
+)
+
+filled_data = None
+
+try:
+    filled_data = json.loads(cleaned_response)
+except json.JSONDecodeError as e:
+    print(f"Error: Failed to parse JSON response: {e}")
+
+if not filled_data:
+    raise Exception("Empty response of JSON")
+
+print(filled_data)
+
+for page in document:
+    for field in page.widgets():
+        if field.field_type == pymupdf.PDF_WIDGET_TYPE_TEXT:  # type: ignore
+            field_name = field.field_name
+            if field_name in filled_data:
+                try:
+                    # Update the form field value
+                    field.field_value = filled_data[field_name]
+                    field.update()  # Important to update the field appearance
+                except Exception as e:
+                    print(f"Error updating field {field_name}: {e}")
+
+# Create output directory if needed
+output_dir = os.path.join(DIR, "../docs")
+os.makedirs(output_dir, exist_ok=True)
+
+# Save the filled PDF
+output_path = os.path.join(output_dir, "filled_form.pdf")
+document.save(output_path)
+print(f"\nSuccessfully saved filled form to:\n{os.path.abspath(output_path)}")
