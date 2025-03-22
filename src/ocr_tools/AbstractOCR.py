@@ -4,7 +4,7 @@ from PIL import Image
 
 
 class AbstractOCR(ABC):
-    def load_image(self, image_path: str) -> None:
+    def _load_image(self, image_path: str) -> None:
         """
         Load an image from the specified path.
 
@@ -12,13 +12,13 @@ class AbstractOCR(ABC):
         """
         self.image = Image.open(image_path)
 
-    def preprocess_image(self) -> None:
+    def _preprocess_image(self) -> None:
         # Basic preprocessing, can be extended based on specific needs
         if self.image.mode != "RGB":
             self.image = self.image.convert("RGB")
 
     @abstractmethod
-    def recognize_text(self) -> str:
+    def _recognize_text(self) -> str:
         """
         Perform OCR on the preprocessed image and return the recognized text.
 
@@ -33,6 +33,6 @@ class AbstractOCR(ABC):
         :param image_path: Path to the image file
         :return: Recognized text as a string
         """
-        self.load_image(image_path)
-        self.preprocess_image()
-        return self.recognize_text()
+        self._load_image(image_path)
+        self._preprocess_image()
+        return self._recognize_text()

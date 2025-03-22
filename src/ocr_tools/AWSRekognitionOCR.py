@@ -1,7 +1,6 @@
 import boto3
 
 from io import BytesIO
-import base64
 
 from .AbstractOCR import AbstractOCR
 
@@ -23,8 +22,8 @@ class AWSRekognitionOCR(AbstractOCR):
             region_name=region_name,
         )
 
-    def recognize_text(self) -> str:
-        image_in_bytes = self.convert_image_to_bytes()
+    def _recognize_text(self) -> str:
+        image_in_bytes = self._convert_image_to_bytes()
 
         response = self.client.detect_text(Image={"Bytes": image_in_bytes})
         text_detections = response["TextDetections"]
@@ -36,7 +35,7 @@ class AWSRekognitionOCR(AbstractOCR):
 
         return output_text
 
-    def convert_image_to_bytes(self) -> bytes:
+    def _convert_image_to_bytes(self) -> bytes:
         if not self.image:
             raise ValueError("Image not loaded. Call load_image() first.")
 

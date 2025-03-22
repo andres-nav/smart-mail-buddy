@@ -11,7 +11,7 @@ class EasyOCR(AbstractOCR):
         self.reader = easyocr.Reader([self.language])
         self.threshold = threshold
 
-    def recognize_text(self) -> str:
+    def _recognize_text(self) -> str:
         if not self.image:
             raise ValueError("Image not loaded. Call load_image() first.")
 
