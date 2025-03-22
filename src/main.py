@@ -1,14 +1,14 @@
+import json
 import os
-
 import re
 
 import pymupdf
 from dotenv import load_dotenv
 from groq import Groq
 
-import json
-
 from ocr_tools import AWSRekognitionOCR
+
+from llms import BedrockLLM
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 FORM_PATH = os.path.join(DIR, "../docs/alta_autonomos.pdf")
@@ -64,23 +64,14 @@ prompt = f"""
 
 """
 
-chat_completion = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": prompt,
-                },
-            ],
-        }
-    ],
-    stream=False,
+
+llm = BedrockLLM(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+    region_name=aws_region,
 )
 
-raw_response = chat_completion.choices[0].message.content
+raw_response = llm.query(prompt)
 
 if not raw_response:
     raise Exception("Empty response from LLM")
