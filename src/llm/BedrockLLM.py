@@ -20,7 +20,7 @@ class BedrockLLM(AbstractLLM):
             region_name=region_name,
         )
 
-    def query(self, query: str) -> str:
+    def _query(self, query: str) -> str:
         """Send a query to AWS Bedrock's Llama 3 70B model."""
         try:
             body = self._format_request_body(query)

@@ -1,14 +1,13 @@
 import json
 import os
-import re
 
 import pymupdf
 from dotenv import load_dotenv
 from groq import Groq
 
-from ocr_tools import AWSRekognitionOCR
+from ocr import AWSRekognitionOCR
 
-from llms import BedrockLLM
+from llm import BedrockLLM
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 FORM_PATH = os.path.join(DIR, "../docs/alta_autonomos.pdf")
@@ -71,46 +70,16 @@ llm = BedrockLLM(
     region_name=aws_region,
 )
 
-raw_response = llm.query(prompt)
-
-if not raw_response:
-    raise Exception("Empty response from LLM")
-
-# Clean the response to extract valid JSON
-cleaned_response_match = re.search(r"(\{.*\})", raw_response, re.DOTALL)
-if cleaned_response_match:
-    cleaned_response = cleaned_response_match.group(1).strip()
-else:
-    raise ValueError("Could not extract JSON from the response")
-
-# Additional cleaning steps
-cleaned_response = (
-    cleaned_response.replace("“", '"')  # Replace smart quotes
-    .replace("”", '"')
-    .replace("'", '"')  # Replace single quotes with double quotes
-    .replace("\\", "")  # Remove potential escape characters
-)
-
-filled_data = None
-
-try:
-    filled_data = json.loads(cleaned_response)
-except json.JSONDecodeError as e:
-    print(f"Error: Failed to parse JSON response: {e}")
-
-if not filled_data:
-    raise Exception("Empty response of JSON")
-
-print(filled_data)
+json_response = llm.send_prompt(prompt)
 
 for page in document:
     for field in page.widgets():
         if field.field_type == pymupdf.PDF_WIDGET_TYPE_TEXT:  # type: ignore
             field_name = field.field_name
-            if field_name in filled_data:
+            if field_name in json_response:
                 try:
                     # Update the form field value
-                    field.field_value = filled_data[field_name]
+                    field.field_value = json_response[field_name]
                     field.update()  # Important to update the field appearance
                 except Exception as e:
                     print(f"Error updating field {field_name}: {e}")
