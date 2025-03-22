@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from PIL import Image
+from PIL import Image  # type: ignore
 
 
 class AbstractOCR(ABC):
