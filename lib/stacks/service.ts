@@ -7,7 +7,11 @@ export class ServiceStack extends cdk.Stack {
     super(scope, id, props);
 
     new EmailProcessor(this, "EmailProcessor", {
-      stackName: this.stackName,
+stackName: this.stackName,
+      organizationName: "EmailAttachmentProcessor",
+      userName: "processor",
+      userEmail: "processor@example.com",
+      userPassword: "SecurePassword123!",  // Use AWS Secrets Manager in production
     });
   }
 }
