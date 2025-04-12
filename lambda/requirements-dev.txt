@@ -1,0 +1,7 @@
+pymupdf
+Pillow
+boto3
+groq
+python-dotenv
+pytesseract
+easyocr
