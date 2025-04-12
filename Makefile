@@ -10,7 +10,7 @@ run:
 	@if [ ! -d $(VENV_PATH) ]; then \
 		$(MAKE) install; \
 	fi
-	@$(VENV_PATH)/bin/python3 src/main.py
+	@$(VENV_PATH)/bin/python3 lambda/main.py
 
 # Create a virtual environment and install dependencies
 .PHONY: install
