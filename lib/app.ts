@@ -1,23 +1,14 @@
+#!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-import { Construct } from "constructs";
+import { ServiceStack } from "./stacks/service";
 
-export class LambdaLayerStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+const app = new cdk.App();
 
-    // const layer = new lambda.LayerVersion(this, "HelperLayer", {
-    //   code: lambda.Code.fromAsset("resources/layers/helper"),
-    //   description: "Common helper utility",
-    //   compatibleRuntimes: [lambda.Runtime.NODEJS_LATEST],
-    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
-    // });
-
-    const fn = new lambda.Function(this, "LambdaFunction", {
-      runtime: lambda.Runtime.NODEJS_LATEST,
-      code: lambda.Code.fromAsset("resources/lambda"),
-      handler: "index.handler",
-      // layers: [layer],
-    });
-  }
-}
+new ServiceStack(app, "SmartMailBuddy-Service", {
+  stackName: "smart-mail-buddy",
+  description: "Smart Mail Buddy application for processing emails",
+  env: {
+    account: process.env.AWS_ACCOUNT,
+    region: process.env.AWS_REGION,
+  },
+});
